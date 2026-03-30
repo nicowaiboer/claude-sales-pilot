@@ -605,7 +605,19 @@ export default function ClaudeSalesPilot() {
   const handleLeadSubmit = (data) => {
     setLeadCaptured(true);
     setShowModal(false);
-    // In production: webhook call to n8n/Airtable here
+
+    fetch("https://nicowaiboer.app.n8n.cloud/webhook/claude-sales-pilot-lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: data.name,
+        email: data.email,
+        company: data.company,
+        answers: answers,
+        score: results?.score || 0,
+        timestamp: new Date().toISOString()
+      })
+    }).catch(() => {});
   };
 
   return (
