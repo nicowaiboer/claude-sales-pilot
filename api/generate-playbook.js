@@ -460,7 +460,7 @@ Geef me:
       .font("Helvetica-Bold")
       .fontSize(11)
       .fillColor(C.brandBlue)
-      .text("\u2192  ", 72, doc.y, { continued: true })
+      .text("\u2022  ", 72, doc.y, { continued: true })
       .fillColor(C.nearBlack)
       .text(title, { continued: true })
       .font("Helvetica")
@@ -491,7 +491,7 @@ Geef me:
     .font("Helvetica-Bold")
     .fontSize(13)
     .fillColor(C.brandBlue)
-    .text("\u2192  nicowaiboer.nl/strategiegesprek", { align: "center" });
+    .text("nicowaiboer.nl/strategiegesprek", { align: "center" });
 
   doc.moveDown(2);
   drawLine(doc, doc.y);
@@ -506,7 +506,7 @@ Geef me:
     .font("Helvetica")
     .fontSize(10)
     .fillColor(C.brandBlue)
-    .text("\u2192  https://waibase.nl", { align: "center" });
+    .text("waibase.nl", { align: "center" });
 
   doc.moveDown(2);
   doc
@@ -514,7 +514,7 @@ Geef me:
     .fontSize(8)
     .fillColor(C.gray400)
     .text(
-      "WaiBase \u2014 Alle rechten voorbehouden.  \u2022  waibase.nl  \u2022  nico@waibase.nl",
+      "\u00A9 2026 WaiBase \u2022 waibase.nl",
       { align: "center" }
     );
 
