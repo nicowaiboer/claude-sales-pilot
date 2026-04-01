@@ -493,7 +493,7 @@ function PromptCard({ prompt, index, copied, onCopy }) {
   );
 }
 
-function LeadCaptureModal({ show, onClose, onSubmit }) {
+function LeadCaptureModal({ show, onSubmit, score }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -509,11 +509,19 @@ function LeadCaptureModal({ show, onClose, onSubmit }) {
         background: colors.cardDark, borderRadius: 20, padding: 40, maxWidth: 460, width: "100%",
         border: `1px solid ${colors.cardMedium}`,
       }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontFamily: "Outfit, sans-serif", fontSize: "3rem", fontWeight: 800, color: score >= 70 ? "#16A34A" : score >= 40 ? "#D97706" : "#DC2626" }}>
+            {score}<span style={{ fontSize: "1.2rem", color: colors.gray400 }}>/100</span>
+          </div>
+          <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: "0.9rem", color: colors.gray400 }}>
+            Jouw Sales Follow-Up Score
+          </div>
+        </div>
         <h3 style={{ fontFamily: "Outfit, sans-serif", fontSize: "1.5rem", fontWeight: 700, color: colors.white, marginBottom: 8 }}>
-          Ontvang alle 5 prompts als PDF
+          Ontvang je persoonlijke Sales AI Playbook
         </h3>
         <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "0.95rem", color: colors.gray400, marginBottom: 24 }}>
-          Plus een persoonlijk AI-actieplan voor jouw salesproces. Gratis, geen verplichtingen.
+          Met je score, 5 kant-en-klare AI prompts en een actieplan op maat. Gratis.
         </p>
         {[
           { label: "Naam", value: name, onChange: setName, placeholder: "Voornaam" },
@@ -551,17 +559,7 @@ function LeadCaptureModal({ show, onClose, onSubmit }) {
             marginTop: 8, transition: "all 0.2s ease",
           }}
         >
-          Verstuur mijn actieplan
-        </button>
-        <button
-          onClick={onClose}
-          style={{
-            width: "100%", padding: "10px", marginTop: 8, background: "transparent",
-            border: "none", color: colors.gray500, fontFamily: "DM Sans, sans-serif",
-            fontSize: "0.85rem", cursor: "pointer",
-          }}
-        >
-          Sla over
+          Ontvang mijn playbook
         </button>
       </div>
     </div>
@@ -577,6 +575,7 @@ export default function ClaudeSalesPilot() {
   const [copied, setCopied] = useState(-1);
   const [showModal, setShowModal] = useState(false);
   const [leadCaptured, setLeadCaptured] = useState(false);
+  const [leadEmail, setLeadEmail] = useState("");
   const resultsRef = useRef(null);
 
   const handleAnswer = (id, value) => {
@@ -589,8 +588,10 @@ export default function ClaudeSalesPilot() {
       } else {
         setScreen("analyzing");
         setTimeout(() => {
-          setResults(generateResults(newAnswers));
+          const res = generateResults(newAnswers);
+          setResults(res);
           setScreen("results");
+          setShowModal(true);
         }, 2500);
       }
     }, 300);
@@ -604,6 +605,7 @@ export default function ClaudeSalesPilot() {
 
   const handleLeadSubmit = (data) => {
     setLeadCaptured(true);
+    setLeadEmail(data.email);
     setShowModal(false);
 
     fetch("https://nicowaiboer.app.n8n.cloud/webhook/claude-sales-pilot-lead", {
@@ -612,12 +614,20 @@ export default function ClaudeSalesPilot() {
       body: JSON.stringify({
         name: data.name,
         email: data.email,
-        company: data.company,
-        answers: answers,
+        company: data.company || "Onbekend",
         score: results?.score || 0,
+        answers: {
+          team_size: answers.team_size,
+          follow_up_method: answers.follow_up_method,
+          biggest_pain: answers.biggest_pain,
+          leads_per_month: answers.leads_per_month,
+          ai_experience: answers.ai_experience
+        },
         timestamp: new Date().toISOString()
       })
-    }).catch(() => {});
+    }).catch((e) => {
+      console.error("Lead capture failed:", e);
+    });
   };
 
   return (
@@ -750,6 +760,17 @@ export default function ClaudeSalesPilot() {
         {/* RESULTS SCREEN */}
         {screen === "results" && results && (
           <div ref={resultsRef} style={{ animation: "fadeIn 0.5s ease" }}>
+            {/* Confirmation banner */}
+            {leadCaptured && leadEmail && (
+              <div style={{
+                background: "#16A34A22", border: "1px solid #16A34A44", borderRadius: 12,
+                padding: "14px 20px", marginBottom: 24, textAlign: "center",
+                fontFamily: "DM Sans, sans-serif", fontSize: "0.95rem", color: "#16A34A",
+              }}>
+                Je Sales AI Playbook wordt verstuurd naar {leadEmail}
+              </div>
+            )}
+
             {/* Score */}
             <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h2 style={{ fontFamily: "Outfit, sans-serif", fontSize: "1.75rem", fontWeight: 700, color: colors.white, marginBottom: 8 }}>
@@ -757,6 +778,25 @@ export default function ClaudeSalesPilot() {
               </h2>
               <ScoreGauge score={results.score} />
             </div>
+
+            {!leadCaptured && (
+              <div style={{
+                textAlign: "center", padding: "40px 20px",
+                background: colors.cardDark, borderRadius: 16, marginBottom: 32,
+                border: `1px solid ${colors.cardMedium}`,
+              }}>
+                <div style={{ fontSize: "2rem", marginBottom: 12 }}>🔒</div>
+                <h3 style={{ fontFamily: "Outfit, sans-serif", fontSize: "1.2rem", fontWeight: 700, color: colors.white, marginBottom: 8 }}>
+                  Je playbook staat klaar
+                </h3>
+                <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: "0.95rem", color: colors.gray400, maxWidth: 360, margin: "0 auto" }}>
+                  Vul je gegevens in om je 5 AI prompts, actieplan en aanbevelingen te ontvangen.
+                </p>
+              </div>
+            )}
+
+            {/* Quick Wins — only after lead capture */}
+            {leadCaptured && <>
 
             {/* Quick Wins */}
             <div style={{
@@ -844,6 +884,8 @@ export default function ClaudeSalesPilot() {
               ))}
             </div>
 
+            </>}
+
             {/* CTA */}
             <div style={{
               background: `linear-gradient(135deg, ${colors.brandBlue}, #1D4ED8)`,
@@ -856,19 +898,6 @@ export default function ClaudeSalesPilot() {
                 Van losse prompts naar een systeem dat dagelijks voor je draait. Zonder dat je eraan hoeft te denken.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-                {!leadCaptured && (
-                  <button
-                    onClick={() => setShowModal(true)}
-                    style={{
-                      padding: "14px 32px", borderRadius: 10, border: `2px solid ${colors.white}`,
-                      background: "transparent", color: colors.white,
-                      fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: "0.95rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Ontvang het volledige playbook
-                  </button>
-                )}
                 <button
                   onClick={() => window.open("https://www.nicowaiboer.nl/strategiegesprek", "_blank")}
                   style={{
@@ -894,7 +923,7 @@ export default function ClaudeSalesPilot() {
         )}
       </main>
 
-      <LeadCaptureModal show={showModal} onClose={() => setShowModal(false)} onSubmit={handleLeadSubmit} />
+      <LeadCaptureModal show={showModal} onSubmit={handleLeadSubmit} score={results?.score || 0} />
     </div>
   );
 }
